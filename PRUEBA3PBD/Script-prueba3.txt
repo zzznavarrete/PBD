@@ -1,0 +1,118 @@
+----- creacion usuario
+CREATE USER PRUEBA3 IDENTIFIED BY practica
+DEFAULT TABLESPACE "USERS"
+TEMPORARY TABLESPACE "TEMP";
+grant connect, resource, create view, create materialized view to PRUEBA3;
+
+------CREACION TABLAS----
+
+Create table empleado(
+num_emp varchar2(40) primary key,
+rut varchar2(15),
+nombre  varchar2(40),
+apellidos varchar2(70),
+tarifa_hora number(20),
+profesion varchar2(40),
+fecha_ingreso date
+);
+
+
+create table comuna(
+    Comuna_Id NUMBER (6) NOT NULL ,
+    Nombre_comuna    VARCHAR2 (50 ),
+    CONSTRAINT Comuna_PK PRIMARY KEY(Comuna_Id)
+  ) ;
+
+create table edificio(
+num_edi varchar2(20) primary key,
+direccion varchar2(40),
+tipo varchar2(40),
+nivel varchar2(40),
+comuna_id NUMBER (6) NOT NULL,
+foreign key(comuna_id) references comuna(comuna_id)
+);
+
+
+create table asignacion(
+num_edi varchar2(20),
+num_emp varchar2(20),
+fecha_ini date,
+fecha_termino date,
+dias_programados number(20),
+foreign key(num_emp) references empleado(num_emp),
+foreign key(num_edi) references edificio(num_edi));
+
+
+insert into empleado values('1235','15987645-9 ','marcelo','perez ruiz',7500,'tecnico electricista','12/05/2001');
+insert into empleado values('1412','12896587-2','carlos','garcia solis',5500,'tecnico electricista','04/08/2005');
+insert into empleado values('2920','17895612-5','rodrigo','gomez parra',5700,'tecnico en redes','21/11/2008');
+insert into empleado values('3231','10478957-7','patricio','moran roa',8400,'tecnico en instalaciones','14/07/2008');
+insert into empleado values('1520','14785212-2','hector','fuentes cid',5800,'tecnico electricista','24/03/2007');
+insert into empleado values('1311','15478987-k','cristian','barrera soto',6000,'analista seguridad','07/04/2009');
+insert into empleado values('3001','16457858-7','andres','mendez cuevas',5800,'operador','01/05/2009');
+insert into empleado values('3158','11457215-6','jorge','orellana campos',8000,'tecnico electricista','15/08/2010');
+insert into empleado values('2870','12458179-5','luisa','contreras fica',10000,'prev.riesgos','20/10/2010');
+
+insert into comuna values(100,'las condes');
+insert into comuna values(200,'santiago');
+insert into comuna values(300,'providencia');
+insert into comuna values(400,'la florida');
+insert into comuna values(500,'puente alto');
+insert into comuna values(600,'maipu');
+
+insert into edificio values('1','alamos 23','oficina','a',200);
+insert into edificio values('2','los alpes 455','tienda','b',200);
+insert into edificio values('3','huerfanos 1060','oficina','a',400);
+insert into edificio values('4','moneda 451','oficina','a',500);
+insert into edificio values('5','av.matta 45','tienda','b',100);
+insert into edificio values('6','vitacura 4587','vivienda','a',600);
+
+
+insert into asignacion values('1','1235','20/10/2011','30/10/2011',10);
+insert into asignacion values('2','1311','22/10/2011','10/11/2011',15);
+insert into asignacion values('1','2920','18/10/2011','12/11/2011',17);
+insert into asignacion values('2','1412','17/10/2012','20/11/2012',25);
+insert into asignacion values('3','1520','20/10/2011','10/11/2011',14);
+insert into asignacion values('5','3231','14/10/2012','13/11/2012',12);
+insert into asignacion values('4','3001','18/10/2013','25/10/2013',7);
+insert into asignacion values('6','3158','20/10/2013','31/10/2013',10);
+insert into asignacion values('3','3001','14/10/2012','28/10/2012',8);
+insert into asignacion values('1','2870','18/10/2012','24/10/2012',5);
+
+
+Create table historico_empleado(
+num_emp varchar2(40) primary key,
+rut varchar2(15),
+nombre  varchar2(40),
+apellidos varchar2(70),
+tarifa_hora number(20),
+profesion varchar2(40),
+fecha_ingreso date,
+fecha_baja date
+);
+
+
+
+----- tabla aumento TARIFA
+
+
+CREATE TABLE TARIFA_IDEAL
+(RUT_PERSONAL   VARCHAR2(15),
+ TARIFA_ACTUAL  NUMBER(15), 
+ AUMENTO NUMBER(15),
+ DIFERENCIA NUMBER(15),
+CONSTRAINT PK_TARIFA_IDEAL PRIMARY KEY(RUT_PERSONAL));
+
+
+commit;
+
+
+
+
+
+
+
+
+
+
+

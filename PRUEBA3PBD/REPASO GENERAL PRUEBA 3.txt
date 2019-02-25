@@ -1,0 +1,194 @@
+-----
+SELECT INTO: 
+
+SELECT salary INTO sueldo
+  FROM employees WHERE employee_id = 120;
+ó
+SELECT e.first_name, e.alast_name INTO nombre, apellido
+	FROM employees e WHERE employee_id = 120;
+
+-----
+EJEMPLO PROCEDIMIENTO E INVOCACION
+
+CREATE or REPLACE PROCEDURE incrementa
+	(k IN OUT NUMBER) AS 
+   BEGIN
+     k:= k+1;
+  END;
+
+
+----INVOCACION
+DECLARE
+ n number := 5;
+BEGIN
+    DBMS_OUTPUT.PUT_LINE('antes :'||n);
+    incrementa(n);
+    DBMS_OUTPUT.PUT_LINE('Después : '||n);
+END;
+
+
+Funciones: SImilaes a los procedimientos, SALVO, que RETORNAN un valor
+
+CREATE or REPLACE FUNCTION f_suma
+	(n IN NUMBER, m IN NUMBER)
+  RETURN NUMBER AS
+BEGIN
+  RETURN n+m;
+END;
+
+
+--Invocación en bloque anónimo
+BEGIN
+  DBMS_OUTPUT.PUT_LINE('suma');
+
+
+---------------------
+Manejo de errores (EXCEPCIONES)
+-------------------------
+Posibles errores:
+-Querys que no retornan tuplas
+se rretornan tipos de datos que no corresponden
+división por cero, etc
+
+**SE DEBEN CONSIDERAR LOS POSIBLES ERRORES EN LA PROGRAMACION
+
+--EJEMPLO
+
+
+DECLARE
+ numero NUMBER(10,2);
+
+BEGIN
+ <s>-query con riesgo de división por cero</s>
+ SELECT (ganancia/perdida) INTO numero 
+ FROM negocio
+ WHERE id = 'N55';
+ 
+ INSERT INTO stats (id, numero) VALUES ('N55', numero);
+
+EXCEPTION -- acá se manejan las excepciones
+
+ WHEN ZERO_DIVIDE THEN --maneja error de división por cero
+  INSERT INTO stats (id, numero) VALUES ('N55', NULL);
+  DBMS_OUTPUT.PUT_LINE('División por cero');
+
+ WHEN OTHERS THEN -- maneja el resto de los errores
+   DBMS_OUTPUT.PUT_LINE('Problema desconocido');
+
+END;
+
+--EXCEPCIONES COMUNES:
+
+- NO_DATA_FOUND: SELECT INTO no retornó nada
+- ROWTYPE_MISMATCH : conflicto de tipos
+- STORAGE_ERROR : Se acabó la memoria
+- SUBSCRIPT_BEYOND_COUNT: Indice sobrepasa tamaño de un array
+- TOO_MANY_WORS: SELECT INTO retornó más de una fila
+- INVALID_CURSOR: error en manejo de cursor 
+---------------------------------------------
+
+
+EJEMPLO PROCEDIMIENTOS Y EXCEPCIONES A LA VEZ 
+
+--En este caso se creará una excepción para evitar que transfiera menos de 34 pesos
+
+CREATE or REPLACE PROCEDURE transfiere
+(c1 in NUMBER, c2 IN NUMBER, monto IN NUMBER) AS
+monto_insuf EXCEPTION;
+BEGIN
+  IF monto<34 THEN
+    raise_application_error(-20013, 'monto insuficiente');
+  END IF;
+-- hace la transferencia
+ EXCEPTION
+   WHEN monto_insuf THEN
+     dbms_output.put_line('monto insifuciente');
+END;
+
+--------------------------------------------
+
+TRIGGERS
+-TRIGGER se ejecuta cuando un evento afecta una tabla
+-TRIGGER es un objeto en la base de datos por lo tanto tiene un NOMBRE
+
+EJ: trigger que avisa luego de inserción de datos
+
+CREATE OR REPLACE TRIGGER post_nueva_ciudad-- nombre
+  AFTER INSERT -- se dispara después de una inserción
+  ON ciudades -- ..en la tabla ciudades..
+  FOR EACH ROW -- ..por cada tupla afectada
+BEGIN
+  DBMS_OUTPUT.PUT_LINE('Nuevo registro en tabla Ciudad!');
+END;
+
+*Pueden dispararse ANTES o DESPUÉS del evento
+*Pueden dispararse una vez por tupla modificada o una vez por query (eliminar FOR EACH ROW del trigger)
+*Pueden responder a más de un evento (insert, update, delete)
+
+--EJEMPLO DE TRIGER QUE AVISA QUIÉN Y A QUÉ HORA HIZO MODIFICACIÓN
+
+CREATE OR REPLACE TRIGGER post_nueva_ciudad_quien
+AFTER INSERT OR UPDATE -- responde a dos eventos
+ON ciudad -- tabla 
+FOR EACH ROW -- x cada tupla afectada
+
+DECLARE -- este trigger posee variables locales
+  usuario VARCHAR2(30);
+  fecha DATE;
+BEGIN
+  SELECT user, sysdate INTO usuario, fecha from dual;
+  DBMS_OUTPUT.PUT_LINE(usuario||'hizo un cambio el '|| fecha');
+END;
+
+-- TAMBIÉN A BASE DE ESE TRIGGER SE PUEDE CREAR TABLAS DE REGISTROS TRANSPARENTES ACTUALIZADAS 
+
+
+---- USAR VALORES DE TUPLAS -------------
+
+*Cuando el trigger es FOR EACH ROW se puede acceder a los valores (antiguos y nuevos) de las tuplas modificadas
+
+-INSERT :   :new
+-UPDATE :   :old & :new
+-DELETE :   :old
+
+*Los campos se acceden como:
+- :old.nombre_columna
+- :new.nombre_columna
+
+
+EJEMPLO : Trigger que notifica cambio de nombre
+
+CREATE OR REPLACE TRIGGER cambio_nombre_ciudad
+  BEFORE update
+  ON ciudades
+  FOR EACH ROW
+BEGIN
+  IF(:old.nombre != :new.nombre) THEN
+     DBMS_OUTPUT.PUT_LINE('La ciudad '||:old.nombre||' va a llamarse'|| :new.nombre);
+  END IF;
+END;
+
+EJEMPLO : Trigger que PROHIBE el ingreso de un carácter
+
+CREARE OR REPLACE TRIGGER anti_arroba
+  BEFORE insert OR update
+  ON ciudades
+  FOR EACH ROW
+BEGIN
+  IF(:new.nombre LIKE '%@%') THEN
+    raise_application_error(-20100, 'anti-@');
+  END IF;
+END;
+
+
+*Eliminar:
+DROP TRIGGER nombre_trigger;
+
+*Habilitar o deshabilitar:
+ALTER TABLE nombre_trigger ENABLE;
+ALTER TABLE nombre_trigger DISABLE
+
+-----
+EJECUTAR PACKAGE 
+exec package.funcion(parametros);
+
